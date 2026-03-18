@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const logger = require('./middleware/logger');
 const validateTodo = require('./middleware/validator');
-const errorhandler = require('./middleware/errorHandler');
+const errorHandler = require('./middleware/errorhandler');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
