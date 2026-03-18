@@ -70,7 +70,7 @@ app.delete('/todos/:id', (req, res) => {
     res.status(200).json({ message: `ID ${id} deleted successfully` });
 });
 
-app.use(errorhandler);
+app.use(errorHandler);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
