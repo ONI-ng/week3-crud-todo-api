@@ -12,7 +12,7 @@
   "description": "",
   "dependencies": {
     "cors": "^2.8.6",
-    "express": "^5.1.0",
+    "express": "^5.2.1",
     "joi": "^18.0.2"
   },
   "devDependencies": {
