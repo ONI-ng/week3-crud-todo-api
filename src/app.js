@@ -1,77 +1,73 @@
 const express = require('express');
 const cors = require('cors');
-const logger = require('./middleware/logger');
-const validateTodo = require('./middleware/validator');
-const errorHandler = require('./middleware/errorhandler');
+require('dotenv').config();
+
+const connectDB = require('./database/mdb');
+const Todo = require('./model/todo.model');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(logger);
 
-let todos = [
-    { id: 1, task: 'Learn Node.js', completed: false },
-    { id: 2, task: 'Build CRUD API', completed: false }
-];
+//  ROUTES
+app.get('/todos', async (req, res) => {
+  try {
+    const filter = {};
 
-app.get('/todos', (req, res) => {
-    res.status(200).json(todos);
-});
-
-app.get('/todos/:id', (req, res, next) => {
-    const { id } = req.params;
-    const todo = todos.find(t => t.id === parseInt(id));
-
-    if (!todo) {
-        const error = new Error(`ID ${id} not found`);
-        error.status = 404;
-        return next(error);
+    if (req.query.completed) {
+      filter.completed = req.query.completed === 'true';
     }
 
-    res.status(200).json(todo);
+    const todos = await Todo.find(filter);
+    res.json(todos);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.post('/todos', validateTodo, (req, res) => {
-    const newTodo = {
-        id: todos.length + 1,
-        task: req.body.task,
-        completed: req.body.completed || false
-    };
-    todos.push(newTodo);
-    res.status(201).json(newTodo);
+app.post('/todos', async (req, res) => {
+  try {
+    const todo = await Todo.create(req.body);
+    res.status(201).json(todo);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
-app.patch('/todos/:id', validateTodo, (req, res, next) => {
-    const { id } = req.params;
-    const todo = todos.find(t => t.id === parseInt(id));
-
-    if (!todo) {
-        const error = new Error(`ID ${id} not found`);
-        error.status = 404;
-        return next(error);
-    }
-
-    if (req.body.task) todo.task = req.body.task;
-    if (req.body.completed !== undefined) todo.completed = req.body.completed;
-
-    res.status(200).json(todo);
+app.put('/todos/:id', async (req, res) => {
+  try {
+    const updated = await Todo.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
-app.delete('/todos/:id', (req, res) => {
-    const id = parseInt(req.params.id);
-    const todoIndex = todos.findIndex(t => t.id === id);
-
-    if (todoIndex === -1) {
-        return res.status(404).json({ message: `ID ${id} not found` });
-    }
-
-    todos.splice(todoIndex, 1);
-    res.status(200).json({ message: `ID ${id} deleted successfully` });
+app.delete('/todos/:id', async (req, res) => {
+  try {
+    await Todo.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Todo deleted' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
-app.use(errorHandler);
+//  START SERVER ONLY AFTER DB CONNECTS
+connectDB()
+  .then(() => {
+    console.log("MongoDB connected");
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("DB connection failed", err);
+  });

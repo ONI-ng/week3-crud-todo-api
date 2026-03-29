@@ -3,7 +3,7 @@ const Joi = require('joi');
 const validateTodo = (req, res, next) => {
     const schema = Joi.object({
         task: Joi.string().min(3).max(100).required(),
-        completed: Joi.boolean().required()
+        completed: Joi.boolean().optional()
     });
 
     const { error } = schema.validate(req.body);
